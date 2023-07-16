@@ -2,12 +2,9 @@ from abc import ABC, abstractmethod
 import requests
 from src.vacancy import Vacancy
 from src.vacancy_storage import JSONVacancyStorage
-
+import os
 
 class VacancyAPI(ABC):
-    @abstractmethod
-    def connect_to_api(self):
-        pass
 
     @abstractmethod
     def get_vacancies(self, search_query):
@@ -28,7 +25,7 @@ class HeadHunterAPI(VacancyAPI):
 
 
 class SuperJobAPI(VacancyAPI):
-    def __init__(self, api_key):
+    def __init__(self):
         self.base_url = 'https://api.superjob.ru/2.0'
         self.api_key = 'v3.r.137682939.5cd91634a0171c336eea416526733ac899ebe531.be4eb6f4ead27ffe6d9eb687fb4e6d3ad5237499'
 
@@ -46,24 +43,45 @@ class SuperJobAPI(VacancyAPI):
 def search_vacancies(storage):
     platform = input("Выберите платформу (1 - HeadHunter, 2 - SuperJob): ")
     search_query = input("Введите поисковый запрос: ")
+    if os.path.exists(file_path):
+        os.remove(file_path)
 
     if platform == '1':
         api_obj = HeadHunterAPI()  # Используем переданный объект API
+        vacancies = api_obj.get_vacancies(search_query)
+        for vacancy_data in vacancies:
+            vacancy = Vacancy(
+                title=vacancy_data['name'],
+                link='https://hh.ru/vacancy/' + vacancy_data["id"],
+                city=vacancy_data['area']['name'],
+                salary_from=vacancy_data['payment_from'],
+                salary_to=vacancy_data['payment_to'],
+                description=vacancy_data['candidat'][0:10]
+            )
+            storage.add_vacancy(vacancy)
     elif platform == '2':
         api_obj = SuperJobAPI()  # Используем переданный объект API
+        vacancies = api_obj.get_vacancies(search_query)
+        for vacancy_data in vacancies:
+            try:
+                vacancy = Vacancy(
+                    title=vacancy_data['profession'],
+                    link=vacancy_data['link'],
+                    city=vacancy_data['client']['town']['title'],
+                    salary_from=vacancy_data['payment_from'],
+                    salary_to=vacancy_data['payment_to'],
+                    description=vacancy_data['candidat'][0:10]
+                )
+                storage.add_vacancy(vacancy)
+                print(vacancy)
+            except KeyError:
+                pass
+
+
     else:
         print("Неверный выбор платформы.")
         return
 
-    vacancies = api_obj.get_vacancies(search_query)
-    for vacancy_data in vacancies:
-        vacancy = Vacancy(
-            title=vacancy_data['name'],
-            link=vacancy_data['link'],
-            salary=vacancy_data['salary'],
-            description=vacancy_data['description']
-        )
-        storage.add_vacancy(vacancy)
 
 if __name__ == "__main__":
     file_path = 'vacancies.json'

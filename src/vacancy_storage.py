@@ -1,7 +1,7 @@
 import json
 from abc import ABC, abstractmethod
 from src.vacancy import Vacancy
-
+import os
 
 class VacancyStorage(ABC):
     @abstractmethod
@@ -21,8 +21,8 @@ class JSONVacancyStorage(VacancyStorage):
         self.file_path = file_path
 
     def add_vacancy(self, vacancy):
-        with open(self.file_path, 'w') as file:
-            json.dump(vacancy.__dict__, file)
+        with open(self.file_path, 'a') as file:
+            json.dump(vacancy.__dict__, file, ensure_ascii=False)
             file.write('\n')
 
     def get_vacancies_by_salary(self, min_salary, max_salary):
