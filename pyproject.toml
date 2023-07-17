@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "vacancy-parser"
+version = "0.1.0"
+description = ""
+authors = ["Artem Ershov <colombadoro@ya.ru>"]
+readme = "README.md"
+packages = [{include = "vacancy_parser"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.31.0"
+storage = "^0.0.4.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
