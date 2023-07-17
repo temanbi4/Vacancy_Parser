@@ -1,7 +1,5 @@
 import json
 from abc import ABC, abstractmethod
-from src.vacancy import Vacancy
-import os
 
 class VacancyStorage(ABC):
     @abstractmethod
@@ -9,38 +7,55 @@ class VacancyStorage(ABC):
         pass
 
     @abstractmethod
-    def get_vacancies_by_salary(self, min_salary, max_salary):
-        pass
-
-    @abstractmethod
-    def delete_vacancy(self, vacancy):
+    def get_vacancies_by_city(self, city):
         pass
 
 class JSONVacancyStorage(VacancyStorage):
     def __init__(self, file_path):
+        """
+        Конструктор класса JSONVacancyStorage.
+
+        Args:
+            file_path (str): Путь к файлу, в который будут сохраняться вакансии в формате JSON.
+        """
         self.file_path = file_path
 
     def add_vacancy(self, vacancy):
-        with open(self.file_path, 'a') as file:
-            json.dump(vacancy.__dict__, file, ensure_ascii=False)
-            file.write('\n')
+        """
+        Метод для добавления новой вакансии в JSON файл.
 
-    def get_vacancies_by_salary(self, min_salary, max_salary):
-        vacancies = []
-        with open(self.file_path, 'r') as file:
-            for line in file:
-                vacancy_data = json.loads(line)
-                salary = vacancy_data['salary']
-                if min_salary <= salary <= max_salary:
-                    vacancies.append(Vacancy(**vacancy_data))
-        return vacancies
+        Args:
+            vacancy (Vacancy): Объект вакансии, который необходимо сохранить.
+        """
+        # Прочитаем существующие данные из файла (если они есть)
+        try:
+            with open(self.file_path, 'r') as file:
+                data = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Если файл не существует или не является JSON, создадим пустой список
+            data = []
 
+        # Добавляем новую вакансию в список
+        data.append(vacancy.__dict__)
 
-    def delete_vacancy(self, vacancy):
-        with open(self.file_path, 'r') as file:
-            lines = file.readlines()
+        # Записываем обновленные данные в файл
         with open(self.file_path, 'w') as file:
-            for line in lines:
-                vacancy_data = json.loads(line)
-                if vacancy_data['title'] != vacancy.title:
-                    file.write(line)
+            json.dump(data, file, indent=4, ensure_ascii=False)
+
+    def get_vacancies_by_city(self, city):
+        """
+        Метод для получения списка вакансий по указанному городу.
+
+        Args:
+            city (str): Город, по которому необходимо произвести фильтрацию вакансий.
+
+        Returns:
+            list: Список вакансий, отфильтрованных по указанному городу.
+        """
+        with open(self.file_path, 'r') as file:
+            data = json.load(file)
+
+        # Фильтруем вакансии по указанному городу
+        filtered_vacancies = [vacancy for vacancy in data if vacancy.get('city') == city]
+
+        return filtered_vacancies
